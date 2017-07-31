@@ -2,10 +2,17 @@ import qbs
 
 Project
 {
-    CppApplication
+    Product
     {
-        Depends { name: "gtest" }
-        cpp.includePaths: "include"
-        files: [ "test/cppcommandlinetest.cpp", "include/cppcommandline.h" ]
+        files: [ "include/cppcommandline.h" ]
+    }
+
+    QtApplication
+    {
+        name: "cppcommandlinetest"
+        Depends { name: "Qt.testlib" }
+        cpp.cxxLanguageVersion: "c++11"
+        cpp.includePaths: [ "include", "test" ]
+        files: [ "test/*" ]
     }
 }
