@@ -424,6 +424,16 @@ template<> Option::Type Option::getType<double>() const { return Type::Double; }
 class Parser
 {
 public:
+    std::string command() const
+    {
+        return mCommand;
+    }
+
+    std::string applicationName() const
+    {
+        return mAppName;
+    }
+
     Option &option()
     {
         mOptions.emplace_back(Option());
@@ -438,9 +448,24 @@ public:
 
     void parse(int argc, char **argv)
     {
+        if(argc == 0)
+            throw(std::logic_error("Missing mandatory first command line argument"));
+        else
+        {
+            mCommand = argv[0];
+            std::cmatch m;
+            if(std::regex_match(mCommand.c_str(), m, std::regex("([^\\\\\\/]+$)")))
+            {
+                mAppName = m[1];
+
+                if(std::regex_match(mAppName.c_str(), std::regex("\\.exe$")))
+                    mAppName.erase(mAppName.size() - 4, 4);
+            }
+        }
+
         mArgs = std::vector<std::string>();
 
-        for(int i = 0; i < argc; i++)
+        for(int i = 1; i < argc; i++)
             mArgs.emplace_back(std::string(argv[i]));
 
         std::vector<Option*> options;
@@ -478,6 +503,8 @@ public:
     }
 
 private:
+    std::string mCommand;
+    std::string mAppName;
     std::vector<std::string> mArgs;
     std::vector<Option> mOptions;
 };

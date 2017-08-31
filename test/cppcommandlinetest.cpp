@@ -262,17 +262,19 @@ void CppCommandLineTest::parse()
 {
     {
     SCENARIO("Single positional option")
-    std::vector<const char*> args{"value"};
+    std::vector<const char*> args{"./app.exe", "value"};
     cppcommandline::Parser parser;
     std::string value;
     parser.option().bindTo(value);
     parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
     QCOMPARE(value, std::string("value"));
+    QCOMPARE(parser.command(), std::string("./app.exe"));
+    QCOMPARE(parser.applicationName(), std::string("app"));
     }
 
     {
     SCENARIO("Multiple positional options")
-    std::vector<const char*> args{"value", "-10", "5.5"};
+    std::vector<const char*> args{"./app", "value", "-10", "5.5"};
     cppcommandline::Parser parser;
     std::string value;
     int iValue = 0;
@@ -288,7 +290,7 @@ void CppCommandLineTest::parse()
 
     {
     SCENARIO("Single long name option")
-    std::vector<const char*> args{"--value"};
+    std::vector<const char*> args{"./app", "--value"};
     cppcommandline::Parser parser;
     bool value;
     parser.option("value").bindTo(value);
@@ -298,7 +300,7 @@ void CppCommandLineTest::parse()
 
     {
     SCENARIO("Multiple long name options")
-    std::vector<const char*> args{"--value", "--option=file", "--yetanother", "10"};
+    std::vector<const char*> args{"./app", "--value", "--option=file", "--yetanother", "10"};
     cppcommandline::Parser parser;
     bool value;
     std::string option;
@@ -314,7 +316,7 @@ void CppCommandLineTest::parse()
 
     {
     SCENARIO("Single short name option")
-    std::vector<const char*> args{"-v"};
+    std::vector<const char*> args{"./app", "-v"};
     cppcommandline::Parser parser;
     bool value;
     parser.option("value").asShortName("v").bindTo(value);
@@ -324,7 +326,7 @@ void CppCommandLineTest::parse()
 
     {
     SCENARIO("Multiple short name options")
-    std::vector<const char*> args{"-v", "-o=file", "-y", "10"};
+    std::vector<const char*> args{"./app", "-v", "-o=file", "-y", "10"};
     cppcommandline::Parser parser;
     bool value;
     std::string option;
@@ -340,7 +342,7 @@ void CppCommandLineTest::parse()
 
     {
     SCENARIO("Mixed options")
-    std::vector<const char*> args{"-v", "-o=file", "--yetanother", "10", "somefile"};
+    std::vector<const char*> args{"./app", "-v", "-o=file", "--yetanother", "10", "somefile"};
     cppcommandline::Parser parser;
     bool value;
     std::string option;
@@ -362,13 +364,13 @@ void CppCommandLineTest::parseFailed()
 {
     {
     SCENARIO("Unmatched argument")
-    std::vector<const char*> args{"-v"};
+    std::vector<const char*> args{"./app", "-v"};
     QVERIFY_EXCEPTION_THROWN(cppcommandline::Parser().parse(static_cast<int>(args.size()), const_cast<char**>(args.data())), std::logic_error);
     }
 
     {
     SCENARIO("Unmatched required option")
-    std::vector<const char*> args{"-v"};
+    std::vector<const char*> args{"./app", "-v"};
     cppcommandline::Parser parser;
     parser.option("longName").asShortName("v");
     parser.option().required();
@@ -377,7 +379,7 @@ void CppCommandLineTest::parseFailed()
 
     {
     SCENARIO("Type mismatch")
-    std::vector<const char*> args{"-v=hello"};
+    std::vector<const char*> args{"./app", "-v=hello"};
     cppcommandline::Parser parser;
     int value = 0;
     parser.option("value").asShortName("v").bindTo(value);
@@ -386,7 +388,7 @@ void CppCommandLineTest::parseFailed()
 
     {
     SCENARIO("Missing value")
-    std::vector<const char*> args{"-v"};
+    std::vector<const char*> args{"./app", "-v"};
     cppcommandline::Parser parser;
     int value = 0;
     parser.option("value").asShortName("v").bindTo(value);
