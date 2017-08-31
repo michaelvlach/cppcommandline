@@ -120,19 +120,19 @@ namespace qtestbdd
 
 //gtestbdd
 #define FEATURE(description)\
-    qInfo() << "FEATURE " << description;
+qInfo() << "FEATURE " << description;
 
 #define SCENARIO(description)\
-    qtestbdd::Scenario s(description);
+qtestbdd::Scenario s(description);
 
 #define GIVEN(description)\
-    s.given(description);
+s.given(description);
 
 #define WHEN(description)\
-    s.when(description);
+s.when(description);
 
 #define THEN(description)\
-    s.then(description);
+s.then(description);
 
 #define AND(description)\
-    s.et(description);
+s.et(description);

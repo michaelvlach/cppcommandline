@@ -12,13 +12,6 @@ namespace cppcommandline
 class Option
 {
 public:
-    enum class Match
-    {
-        None,
-        Argument,
-        ArgumentAndValue
-    };
-
     Option() :
         d(std::unique_ptr<OptionPrivate>(new OptionPrivate))
     {
@@ -32,6 +25,19 @@ public:
             throw std::logic_error("The name '" + longName + "' is not a valid option name.");
         else
             d->longName = longName;
+    }
+
+    Option(Option &&option) :
+        d(option.d.release())
+    {
+
+    }
+
+    Option(const Option &option) = delete;
+
+    Option &operator=(Option &&option)
+    {
+        d.reset(option.d.release()); return *this;
     }
 
     bool isPositional() const
@@ -94,20 +100,6 @@ public:
         return val;
     }
 
-    Option(Option &&option) :
-        d(option.d.release())
-    {
-
-    }
-
-    Option(const Option &option) = delete;
-
-    Option &operator=(Option &&option)
-    {
-        d.reset(option.d.release());
-        return *this;
-    }
-
     Option &asShortName(std::string shortName)
     {
 
@@ -163,49 +155,17 @@ public:
         setValueBinding(&value);
     }
 
-    Match match(std::string argument, std::string next = std::string())
-    {
-        Match result = Match::None;
-        KeyValue keyValue = getKeyValue(argument);
-
-        if(keyValue.key.empty()) //either positional or next is a value
-        {
-            if(isLongNameArgument(argument))
-            {
-
-            }
-            else if(isShortNameArgument(argument))
-            {
-
-            }
-            else //positional, next is not part of this resolution
-            {
-                if(d->type == Type::Bool) //next is not part of this resolution
-                {
-
-                }
-                else
-                {
-
-                }
-            }
-        }
-        else //next is not part of this resolution
-        {
-            if(isLongNameArgument(keyValue.key))
-            {
-
-            }
-            else if(isShortNameArgument(keyValue.key))
-            {
-
-            }
-        }
-
-        return result;
-    }
-
 private:
+    enum class Type
+    {
+        Undefined,
+        String,
+        Integer,
+        LongLong,
+        Double,
+        Bool
+    };
+
     union DefaultValue
     {
         int i;
@@ -227,16 +187,6 @@ private:
     {
         std::string key;
         std::string value;
-    };
-
-    enum class Type
-    {
-        Undefined,
-        String,
-        Integer,
-        LongLong,
-        Double,
-        Bool
     };
 
     struct OptionPrivate
