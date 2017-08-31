@@ -125,6 +125,15 @@ void CppCommandLineTest::boundValue()
     }
 
     {
+    SCENARIO("Option bound value with default value")
+    std::string boundValue;
+    cppcommandline::Option option = std::move(cppcommandline::Option().withDefaultValue(std::string("filename")));
+    option.bindTo(boundValue);
+    QCOMPARE(option.boundValue<std::string>(), &boundValue);
+    QCOMPARE(boundValue, std::string("filename"));
+    }
+
+    {
     SCENARIO("Option bound value with differently typed default value is not possible")
     std::string boundValue;
     cppcommandline::Option option = std::move(cppcommandline::Option().withDefaultValue(10));
@@ -351,7 +360,38 @@ void CppCommandLineTest::parse()
 
 void CppCommandLineTest::parseFailed()
 {
+    {
+    SCENARIO("Unmatched argument")
+    std::vector<const char*> args{"-v"};
+    QVERIFY_EXCEPTION_THROWN(cppcommandline::Parser().parse(static_cast<int>(args.size()), const_cast<char**>(args.data())), std::logic_error);
+    }
 
+    {
+    SCENARIO("Unmatched required option")
+    std::vector<const char*> args{"-v"};
+    cppcommandline::Parser parser;
+    parser.option("longName").asShortName("v");
+    parser.option().required();
+    QVERIFY_EXCEPTION_THROWN(parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data())), std::logic_error);
+    }
+
+    {
+    SCENARIO("Type mismatch")
+    std::vector<const char*> args{"-v=hello"};
+    cppcommandline::Parser parser;
+    int value = 0;
+    parser.option("value").asShortName("v").bindTo(value);
+    QVERIFY_EXCEPTION_THROWN(parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data())), std::logic_error);
+    }
+
+    {
+    SCENARIO("Missing value")
+    std::vector<const char*> args{"-v"};
+    cppcommandline::Parser parser;
+    int value = 0;
+    parser.option("value").asShortName("v").bindTo(value);
+    QVERIFY_EXCEPTION_THROWN(parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data())), std::logic_error);
+    }
 }
 
 QTEST_APPLESS_MAIN(CppCommandLineTest)
