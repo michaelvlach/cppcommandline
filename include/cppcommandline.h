@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <regex>
 #include <memory>
+#include <iostream>
 
 namespace cppcommandline
 {
@@ -38,6 +39,17 @@ public:
     Option &operator=(Option &&option)
     {
         d.reset(option.d.release()); return *this;
+    }
+
+    bool operator==(const Option &other) const
+    {
+        return d->defaultStringValue == other.d->defaultStringValue
+            && d->description == other.d->description
+            && d->longName == other.d->longName
+            && d->required == other.d->required
+            && d->shortName == other.d->shortName
+            && d->type == other.d->type;
+        //TODO: Compare the union values.
     }
 
     bool isPositional() const
@@ -116,7 +128,7 @@ public:
 
     Option &required()
     {
-        if(d->type == Type::Undefined)
+        if(!d->defaulted)
             d->required = true;
         else
             throw std::logic_error("The option " + getName() + " has default value and cannot be set as required.");
@@ -141,6 +153,7 @@ public:
         {
             setDefault(defaultValue);
             d->type = getType<T>();
+            defaulted = true;
         }
         return *this;
     }
@@ -153,6 +166,84 @@ public:
         else if(!defaultTypeCompatibleWithBoundType(d->type, getType<T>()))
             throw std::logic_error("The option " + getName() + " has default value set with incompatible type (" + getTypeAsString(d->type) + ") to the one it is being bound to (" + getTypeAsString(getType<T>()) + ")" );
         setValueBinding(&value);
+    }
+
+    std::vector<std::string>::const_iterator match(std::vector<std::string>::const_iterator argument, std::vector<std::string>::const_iterator end)
+    {
+        std::vector<std::string>::const_iterator returnPosition = argument;
+        KeyValue keyValue = getKeyValue(*argument);
+
+        if(isLongNameArgument(keyValue.key) || isShortNameArgument(keyValue.key))
+        {
+            ++argument;
+
+            if(d->type == Type::Bool)
+                *d->valueBinding.b = true;
+            else
+            {
+                if(keyValue.value.empty())
+                {
+                    if(argument == end)
+                        throw(std::logic_error("Missing value for option '" + longName() + "'"));
+                    else
+                    {
+                        keyValue.value = *argument;
+                        ++argument;
+                    }
+                }
+
+                class ValueParseError : public std::logic_error
+                {
+                public:
+                    ValueParseError() :
+                        std::logic_error("...")
+                    {
+
+                    }
+                };
+
+                try
+                {
+                    switch(d->type)
+                    {
+                    case Type::Double:
+                        if(isDouble(*argument))
+                            *d->valueBinding.d = std::stod(*argument);
+                        else
+                            throw(ValueParseError());
+                        break;
+                    case Type::Integer:
+                        if(isInteger(*argument))
+                            *d->valueBinding.i = std::stoi(*argument);
+                        else
+                            throw(ValueParseError());
+                        break;
+                    case Type::LongLong:
+                        if(isLongLong(*argument))
+                            *d->valueBinding.l = std::stol(*argument);
+                        else
+                            throw(ValueParseError());
+                        break;
+                    case Type::String:
+                        *d->valueBinding.s = *argument;
+                        break;
+                    case Type::Undefined:
+                        throw(std::logic_error("Bind value is undefined"));
+                        break;
+                    case Type::Bool:
+                        throw(std::logic_error("Bool option should not be handled here"));
+                        break;
+                    }
+
+                    returnPosition = argument;
+                }
+                catch(ValueParseError&)
+                {
+                }
+            }
+        }
+
+        return returnPosition;
     }
 
 private:
@@ -199,6 +290,7 @@ private:
         Option::ValueBinding valueBinding;
         Option::Type type = Type::Undefined;
         bool required = false;
+        bool defaulted = false;
     };
 
     template<typename T> T *getBoundValue() const;
@@ -304,11 +396,11 @@ template<> void Option::setDefault(int defaultValue) { d->defaultValue.i = defau
 template<> void Option::setDefault(long long defaultValue) { d->defaultValue.l = defaultValue; }
 template<> void Option::setDefault(double defaultValue) { d->defaultValue.d = defaultValue; }
 template<> void Option::setDefault(bool defaultValue) { d->defaultValue.b = defaultValue; }
-template<> void Option::setValueBinding(std::string *binding) { d->valueBinding.s = binding; }
-template<> void Option::setValueBinding(int *binding) { d->valueBinding.i = binding; }
-template<> void Option::setValueBinding(long long *binding) { d->valueBinding.l = binding; }
-template<> void Option::setValueBinding(double *binding) { d->valueBinding.d = binding; }
-template<> void Option::setValueBinding(bool *binding) { d->valueBinding.b = binding; }
+template<> void Option::setValueBinding(std::string *binding) { d->valueBinding.s = binding; if(d->defaulted) *binding = d->defaultStringValue; }
+template<> void Option::setValueBinding(int *binding) { d->valueBinding.i = binding; if(d->defaulted) *binding = d->defaultValue.i; }
+template<> void Option::setValueBinding(long long *binding) { d->valueBinding.l = binding; if(d->defaulted) *binding = d->defaultValue.l; }
+template<> void Option::setValueBinding(double *binding) { d->valueBinding.d = binding; if(d->defaulted) *binding = d->defaultValue.d; }
+template<> void Option::setValueBinding(bool *binding) { d->valueBinding.b = binding; if(d->defaulted) *binding = d->defaultValue.b; }
 template<> Option::Type Option::getType<std::string>() const { return Type::String; }
 template<> Option::Type Option::getType<int>() const { return Type::Integer; }
 template<> Option::Type Option::getType<long long>() const { return Type::LongLong; }
@@ -332,18 +424,44 @@ public:
 
     void parse(int argc, char **argv)
     {
-        mArgc = argc;
-        mArgv = argv;
+        mArgs = std::vector<std::string>();
 
-        for(int i = 0; i < mArgc; ++i)
+        for(int i = 0; i < argc; i++)
+            mArgs.emplace_back(std::string(argv[i]));
+
+        std::vector<Option*> options;
+
+        for(Option &option : mOptions)
+            options.emplace_back(&option);
+
+        for(auto arg = mArgs.cbegin(); arg != mArgs.cend();)
         {
+            auto start = arg;
 
+            for(auto option = options.begin(); option != options.end(); ++option)
+            {
+                auto next = (*option)->match(arg, mArgs.cend());
+
+                if(next != arg)
+                {
+                    options.erase(option);
+                    arg = next;
+                }
+            }
+
+            if(arg == start)
+                throw(std::logic_error("No option set for argument '" + *arg + "'"));
+        }
+
+        for(Option *option : options)
+        {
+            if(option->isRequired())
+                throw(std::logic_error("Option '" + option->longName() + "' was set as required but did not match any arguments"));
         }
     }
 
 private:
-    int mArgc = 0;
-    char **mArgv = nullptr;
+    std::vector<std::string> mArgs;
     std::vector<Option> mOptions;
 };
 

@@ -16,4 +16,8 @@ private slots:
     void required();
     void defaultValue();
     void boundValue();
+    void match();
+    void ParserOption();
+    void ParserOptionLongName();
+    void parse();
 };

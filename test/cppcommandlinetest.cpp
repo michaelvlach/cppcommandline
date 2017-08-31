@@ -132,8 +132,35 @@ void CppCommandLineTest::boundValue()
     }
 }
 
+void CppCommandLineTest::match()
+{
+    {
+    SCENARIO("Option match")
+    std::vector<std::string> arguments{"longName", "value"};
+    std::string value;
+    cppcommandline::Option option("longName");
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    }
+}
 
+void CppCommandLineTest::ParserOption()
+{
+    SCENARIO("Parser returns a default constructed option")
+    cppcommandline::Parser parser;
+    QCOMPARE(cppcommandline::Option(), parser.option());
+}
 
+void CppCommandLineTest::ParserOptionLongName()
+{
+    SCENARIO("Parser returns a default constructed option")
+    cppcommandline::Parser parser;
+    QCOMPARE(cppcommandline::Option("longName"), parser.option("longName"));
+}
 
+void CppCommandLineTest::parse()
+{
+
+}
 
 QTEST_APPLESS_MAIN(CppCommandLineTest)
