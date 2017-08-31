@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <memory>
 
 class CppCommandLineTest : public QObject
 {
@@ -20,4 +21,8 @@ private slots:
     void ParserOption();
     void ParserOptionLongName();
     void parse();
+    void parseFailed();
+
+private:
+    std::unique_ptr<char**, void(*)(char**)> createArguments(std::vector<std::string> arguments);
 };

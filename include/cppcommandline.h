@@ -180,7 +180,7 @@ public:
                     ++argument;
             }
         }
-        else if(keyValue.key == longName() || keyValue.key == shortName())
+        else if((isLongNameArgument(*argument) && keyValue.key == longName()) || (isShortNameArgument(*argument) && keyValue.key == shortName()))
         {
             if(d->type == Type::Bool)
             {
@@ -354,12 +354,12 @@ private:
 
     bool isLongNameArgument(std::string argument) const
     {
-        return std::regex_match(argument, std::regex("^--[a-zA-Z][a-zA-Z\\d]+$"));
+        return std::regex_match(argument, std::regex("^--[a-zA-Z][a-zA-Z\\d]*.*$"));
     }
 
     bool isShortNameArgument(std::string argument) const
     {
-        return std::regex_match(argument, std::regex("^-[a-zA-Z]$"));
+        return std::regex_match(argument, std::regex("^-[a-zA-Z].*$"));
     }
 
     bool isInteger(std::string argument) const
@@ -452,15 +452,18 @@ public:
         {
             auto start = arg;
 
-            for(auto option = options.begin(); option != options.end(); ++option)
+            for(auto option = options.begin(); option != options.end();)
             {
                 auto next = (*option)->match(arg, mArgs.cend());
 
                 if(next != arg)
                 {
-                    options.erase(option);
+                    option = options.erase(option);
                     arg = next;
+                    break;
                 }
+                else
+                    ++option;
             }
 
             if(arg == start)

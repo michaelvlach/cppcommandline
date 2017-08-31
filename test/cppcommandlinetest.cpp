@@ -7,13 +7,13 @@ void CppCommandLineTest::OptionDefaultCtor()
 {
     SCENARIO("Option default constructor")
     cppcommandline::Option option;
-    QCOMPARE(true, option.isPositional());
-    QCOMPARE(std::string(), option.longName());
-    QCOMPARE(std::string(), option.shortName());
-    QCOMPARE(std::string(), option.description());
-    QCOMPARE(false, option.isRequired());
-    QCOMPARE(std::string(), option.defaultValue<std::string>());
-    QCOMPARE(nullptr, option.boundValue<std::string>());
+    QCOMPARE(option.isPositional(), true);
+    QCOMPARE(option.longName(), std::string());
+    QCOMPARE(option.shortName(), std::string());
+    QCOMPARE(option.description(), std::string());
+    QCOMPARE(option.isRequired(), false);
+    QCOMPARE(option.defaultValue<std::string>(), std::string());
+    QCOMPARE(option.boundValue<std::string>(), nullptr);
 }
 
 void CppCommandLineTest::OptionLongNameCtor()
@@ -21,7 +21,7 @@ void CppCommandLineTest::OptionLongNameCtor()
     {
     SCENARIO("Option long name constructor")
     cppcommandline::Option option("longName1");
-    QCOMPARE(std::string("longName1"), option.longName());
+    QCOMPARE(option.longName(), std::string("longName1"));
     }
 
     {
@@ -34,14 +34,14 @@ void CppCommandLineTest::OptionMoveCtor()
 {
     SCENARIO("Option move ctor")
     cppcommandline::Option option(cppcommandline::Option("longName"));
-    QCOMPARE(std::string("longName"), option.longName());
+    QCOMPARE(option.longName(), std::string("longName"));
 }
 
 void CppCommandLineTest::OptionMoveAssignment()
 {
     SCENARIO("Option move assignment")
     cppcommandline::Option option = cppcommandline::Option("longName");
-    QCOMPARE(std::string("longName"), option.longName());
+    QCOMPARE(option.longName(), std::string("longName"));
 }
 
 void CppCommandLineTest::positional()
@@ -49,13 +49,13 @@ void CppCommandLineTest::positional()
     {
     SCENARIO("Option is positional without any names")
     cppcommandline::Option option;
-    QCOMPARE(true, option.isPositional());
+    QCOMPARE(option.isPositional(), true);
     }
 
     {
     SCENARIO("Option is not positional if it has a name")
     cppcommandline::Option option("longName");
-    QCOMPARE(false, option.isPositional());
+    QCOMPARE(option.isPositional(), false);
     }
 }
 
@@ -64,7 +64,7 @@ void CppCommandLineTest::shortName()
     {
     SCENARIO("Option short name")
     cppcommandline::Option option = std::move(cppcommandline::Option("longName1").asShortName("o"));
-    QCOMPARE(std::string("o"), option.shortName());
+    QCOMPARE(option.shortName(), std::string("o"));
     }
 
     {
@@ -77,7 +77,7 @@ void CppCommandLineTest::description()
 {
     SCENARIO("Option description")
     cppcommandline::Option option = std::move(cppcommandline::Option("longName").withDescription("My fancty description"));
-    QCOMPARE(std::string("My fancty description"), option.description());
+    QCOMPARE(option.description(), std::string("My fancty description"));
 }
 
 void CppCommandLineTest::required()
@@ -85,7 +85,7 @@ void CppCommandLineTest::required()
     {
     SCENARIO("Option required")
     cppcommandline::Option option = std::move(cppcommandline::Option("longName").required());
-    QCOMPARE(true, option.isRequired());
+    QCOMPARE(option.isRequired(), true);
     }
 
     {
@@ -99,7 +99,7 @@ void CppCommandLineTest::defaultValue()
     {
     SCENARIO("Option default value")
     cppcommandline::Option option = std::move(cppcommandline::Option("longName").withDefaultValue(std::string("option")));
-    QCOMPARE(std::string("option"), option.defaultValue<std::string>());
+    QCOMPARE(option.defaultValue<std::string>(), std::string("option"));
     }
 
     {
@@ -121,7 +121,7 @@ void CppCommandLineTest::boundValue()
     std::string boundValue;
     cppcommandline::Option option;
     option.bindTo(boundValue);
-    QCOMPARE(&boundValue, option.boundValue<std::string>());
+    QCOMPARE(option.boundValue<std::string>(), &boundValue);
     }
 
     {
@@ -140,7 +140,7 @@ void CppCommandLineTest::match()
     std::string value;
     cppcommandline::Option option("longName");
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(std::string("value"), value);
     }
 
@@ -150,7 +150,7 @@ void CppCommandLineTest::match()
     std::string value;
     cppcommandline::Option option("longName");
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(std::string("value"), value);
     }
 
@@ -160,7 +160,7 @@ void CppCommandLineTest::match()
     bool value;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(true, value);
     }
 
@@ -170,7 +170,7 @@ void CppCommandLineTest::match()
     std::string value;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(std::string("value"), value);
     }
 
@@ -180,7 +180,7 @@ void CppCommandLineTest::match()
     int value = 0;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(10, value);
     }
 
@@ -190,7 +190,7 @@ void CppCommandLineTest::match()
     int value = 0;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(-10, value);
     }
 
@@ -200,7 +200,7 @@ void CppCommandLineTest::match()
     double value = 0;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(double(5.5), value);
     }
 
@@ -210,7 +210,7 @@ void CppCommandLineTest::match()
     double value = 0;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
     QCOMPARE(double(-5.5), value);
     }
 
@@ -220,8 +220,8 @@ void CppCommandLineTest::match()
     qint64 value = 0;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
-    QCOMPARE(qint64(999999999999), value);
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
+    QCOMPARE(value, qint64(999999999999));
     }
 
     {
@@ -230,8 +230,8 @@ void CppCommandLineTest::match()
     qint64 value = 0;
     cppcommandline::Option option;
     option.bindTo(value);
-    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
-    QCOMPARE(qint64(-999999999999), value);
+    QCOMPARE(option.match(arguments.cbegin(), arguments.cend()), arguments.cend());
+    QCOMPARE(value, qint64(-999999999999));
     }
 }
 
@@ -239,17 +239,117 @@ void CppCommandLineTest::ParserOption()
 {
     SCENARIO("Parser returns a default constructed option")
     cppcommandline::Parser parser;
-    QCOMPARE(cppcommandline::Option(), parser.option());
+    QCOMPARE(parser.option(), cppcommandline::Option());
 }
 
 void CppCommandLineTest::ParserOptionLongName()
 {
     SCENARIO("Parser returns a default constructed option")
     cppcommandline::Parser parser;
-    QCOMPARE(cppcommandline::Option("longName"), parser.option("longName"));
+    QCOMPARE(parser.option("longName"), cppcommandline::Option("longName"));
 }
 
 void CppCommandLineTest::parse()
+{
+    {
+    SCENARIO("Single positional option")
+    std::vector<const char*> args{"value"};
+    cppcommandline::Parser parser;
+    std::string value;
+    parser.option().bindTo(value);
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QCOMPARE(value, std::string("value"));
+    }
+
+    {
+    SCENARIO("Multiple positional options")
+    std::vector<const char*> args{"value", "-10", "5.5"};
+    cppcommandline::Parser parser;
+    std::string value;
+    int iValue = 0;
+    double dValue = 0.0;
+    parser.option().bindTo(iValue);
+    parser.option().bindTo(dValue);
+    parser.option().bindTo(value);
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QCOMPARE(value, std::string("value"));
+    QCOMPARE(iValue, -10);
+    QCOMPARE(dValue, 5.5);
+    }
+
+    {
+    SCENARIO("Single long name option")
+    std::vector<const char*> args{"--value"};
+    cppcommandline::Parser parser;
+    bool value;
+    parser.option("value").bindTo(value);
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QCOMPARE(value, true);
+    }
+
+    {
+    SCENARIO("Multiple long name options")
+    std::vector<const char*> args{"--value", "--option=file", "--yetanother", "10"};
+    cppcommandline::Parser parser;
+    bool value;
+    std::string option;
+    int another = 0;
+    parser.option("value").bindTo(value);
+    parser.option("option").bindTo(option);
+    parser.option("yetanother").bindTo(another);
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QCOMPARE(value, true);
+    QCOMPARE(option, std::string("file"));
+    QCOMPARE(another, 10);
+    }
+
+    {
+    SCENARIO("Single short name option")
+    std::vector<const char*> args{"-v"};
+    cppcommandline::Parser parser;
+    bool value;
+    parser.option("value").asShortName("v").bindTo(value);
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QCOMPARE(value, true);
+    }
+
+    {
+    SCENARIO("Multiple short name options")
+    std::vector<const char*> args{"-v", "-o=file", "-y", "10"};
+    cppcommandline::Parser parser;
+    bool value;
+    std::string option;
+    int another = 0;
+    parser.option("value").asShortName("v").bindTo(value);
+    parser.option("option").asShortName("o").bindTo(option);
+    parser.option("yetanother").asShortName("y").bindTo(another);
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QCOMPARE(value, true);
+    QCOMPARE(option, std::string("file"));
+    QCOMPARE(another, 10);
+    }
+
+    {
+    SCENARIO("Mixed options")
+    std::vector<const char*> args{"-v", "-o=file", "--yetanother", "10", "somefile"};
+    cppcommandline::Parser parser;
+    bool value;
+    std::string option;
+    int another = 0;
+    std::string positional;
+    parser.option("value").asShortName("v").bindTo(value);
+    parser.option("option").asShortName("o").bindTo(option);
+    parser.option("yetanother").bindTo(another);
+    parser.option().bindTo(positional);
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QCOMPARE(value, true);
+    QCOMPARE(option, std::string("file"));
+    QCOMPARE(another, 10);
+    QCOMPARE(positional, std::string("somefile"));
+    }
+}
+
+void CppCommandLineTest::parseFailed()
 {
 
 }
