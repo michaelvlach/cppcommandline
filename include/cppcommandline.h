@@ -153,7 +153,7 @@ public:
         {
             setDefault(defaultValue);
             d->type = getType<T>();
-            defaulted = true;
+            d->defaulted = true;
         }
         return *this;
     }
@@ -170,80 +170,37 @@ public:
 
     std::vector<std::string>::const_iterator match(std::vector<std::string>::const_iterator argument, std::vector<std::string>::const_iterator end)
     {
-        std::vector<std::string>::const_iterator returnPosition = argument;
         KeyValue keyValue = getKeyValue(*argument);
 
-        if(isLongNameArgument(keyValue.key) || isShortNameArgument(keyValue.key))
+        if(keyValue.key.empty())
         {
-            ++argument;
-
-            if(d->type == Type::Bool)
-                *d->valueBinding.b = true;
-            else
+            if(isPositional())
             {
-                if(keyValue.value.empty())
-                {
-                    if(argument == end)
-                        throw(std::logic_error("Missing value for option '" + longName() + "'"));
-                    else
-                    {
-                        keyValue.value = *argument;
-                        ++argument;
-                    }
-                }
-
-                class ValueParseError : public std::logic_error
-                {
-                public:
-                    ValueParseError() :
-                        std::logic_error("...")
-                    {
-
-                    }
-                };
-
-                try
-                {
-                    switch(d->type)
-                    {
-                    case Type::Double:
-                        if(isDouble(*argument))
-                            *d->valueBinding.d = std::stod(*argument);
-                        else
-                            throw(ValueParseError());
-                        break;
-                    case Type::Integer:
-                        if(isInteger(*argument))
-                            *d->valueBinding.i = std::stoi(*argument);
-                        else
-                            throw(ValueParseError());
-                        break;
-                    case Type::LongLong:
-                        if(isLongLong(*argument))
-                            *d->valueBinding.l = std::stol(*argument);
-                        else
-                            throw(ValueParseError());
-                        break;
-                    case Type::String:
-                        *d->valueBinding.s = *argument;
-                        break;
-                    case Type::Undefined:
-                        throw(std::logic_error("Bind value is undefined"));
-                        break;
-                    case Type::Bool:
-                        throw(std::logic_error("Bool option should not be handled here"));
-                        break;
-                    }
-
-                    returnPosition = argument;
-                }
-                catch(ValueParseError&)
-                {
-                }
+                if(setValue(*argument))
+                    ++argument;
             }
         }
+        else if(keyValue.key == longName() || keyValue.key == shortName())
+        {
+            if(d->type == Type::Bool)
+            {
+                if(setValue(*argument))
+                    ++argument;
+            }
+            else if(keyValue.value.empty())
+            {
+                std::vector<std::string>::const_iterator it = argument+1;
 
-        return returnPosition;
+                if(it == end)
+                    throw(std::logic_error("Missing value for option '" + longName() + "'"));
+                else if(setValue(*it))
+                    argument += 2;
+            }
+            else if(setValue(keyValue.value))
+                ++argument;
+        }
+
+        return argument;
     }
 
 private:
@@ -299,6 +256,61 @@ private:
     template<typename T> void setValueBinding(T*);
     template<typename T> Type getType() const;
 
+    bool setValue(std::string value)
+    {
+        bool result = true;
+
+        class ValueParseError : public std::logic_error
+        {
+        public:
+            ValueParseError() :
+                std::logic_error("...")
+            {
+
+            }
+        };
+
+        try
+        {
+            switch(d->type)
+            {
+            case Type::Bool:
+                *d->valueBinding.b = true;
+                break;
+            case Type::Double:
+                if(isDouble(value))
+                    *d->valueBinding.d = std::stod(value);
+                else
+                    throw(ValueParseError());
+                break;
+            case Type::Integer:
+                if(isInteger(value))
+                    *d->valueBinding.i = std::stoi(value);
+                else
+                    throw(ValueParseError());
+                break;
+            case Type::LongLong:
+                if(isLongLong(value))
+                    *d->valueBinding.l = std::stoll(value);
+                else
+                    throw(ValueParseError());
+                break;
+            case Type::String:
+                *d->valueBinding.s = value;
+                break;
+            case Type::Undefined:
+                throw(std::logic_error("Bind value undefined for option '" + longName() + "'"));
+                break;
+            }
+        }
+        catch(ValueParseError&)
+        {
+            result = false;
+        }
+
+        return result;
+    }
+
     std::string getName() const
     {
         return d->longName.empty() ? "[Positional]" : "'" + d->longName + "'";
@@ -324,12 +336,14 @@ private:
     KeyValue getKeyValue(std::string argument) const
     {
         KeyValue keyValue;
-        if(std::regex_match(argument, std::regex("^(--|-)[a-zA-Z\\d]=.*")))
+        std::cmatch m;
+        if(std::regex_match(argument.c_str(), m, std::regex("^(--|-)([a-zA-Z\\d]+)((=(.*))|)")))
         {
-            size_t pos = argument.find_first_of('=') + 1;
-            keyValue.key = argument.substr(0, pos);
-            keyValue.value = argument.substr(pos, argument.size() - pos);
+            keyValue.key = m.size() > 2 ? std::string(m[2]) : "";
+            keyValue.value = m.size() > 4 ? std::string(m[5]) : "";
         }
+        else
+            keyValue.value = argument;
         return keyValue;
     }
 
@@ -355,17 +369,17 @@ private:
 
     bool isLongLong(std::string argument) const
     {
-        return isNumber(argument) && (std::stoll(argument) < std::numeric_limits<int>::min() || std::stoll(argument) > std::numeric_limits<int>::max());
+        return isNumber(argument);
     }
 
     bool isDouble(std::string argument) const
     {
-        return std::regex_match(argument, std::regex("^(-|\\d)\\d+(.|,)\\d+$"));
+        return std::regex_match(argument, std::regex("^(-|)\\d+\\.\\d+$"));
     }
 
     bool isNumber(std::string argument) const
     {
-        return std::regex_match(argument, std::regex("^(-|\\d)\\d+$"));
+        return std::regex_match(argument, std::regex("^(-|)\\d+$"));
     }
 
     bool isLongName(std::string longName) const

@@ -135,12 +135,73 @@ void CppCommandLineTest::boundValue()
 void CppCommandLineTest::match()
 {
     {
-    SCENARIO("Option match")
-    std::vector<std::string> arguments{"longName", "value"};
+    SCENARIO("Option match separate option and value")
+    std::vector<std::string> arguments{"--longName", "value"};
     std::string value;
     cppcommandline::Option option("longName");
     option.bindTo(value);
     QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(std::string("value"), value);
+    }
+
+    {
+    SCENARIO("Option match joined option and value with =")
+    std::vector<std::string> arguments{"--longName=value"};
+    std::string value;
+    cppcommandline::Option option("longName");
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(std::string("value"), value);
+    }
+
+    {
+    SCENARIO("Option match positional boolean argument")
+    std::vector<std::string> arguments{"positional"};
+    bool value;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(true, value);
+    }
+
+    {
+    SCENARIO("Option match positional argument with value")
+    std::vector<std::string> arguments{"value"};
+    std::string value;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(std::string("value"), value);
+    }
+
+    {
+    SCENARIO("Option match `int` argument")
+    std::vector<std::string> arguments{"10"};
+    int value = 0;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(10, value);
+    }
+
+    {
+    SCENARIO("Option match `double` argument")
+    std::vector<std::string> arguments{"5.5"};
+    double value = 0;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(double(5.5), value);
+    }
+
+    {
+    SCENARIO("Option match `long long` argument")
+    std::vector<std::string> arguments{"999999999999"};
+    qint64 value = 0;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(qint64(999999999999), value);
     }
 }
 
