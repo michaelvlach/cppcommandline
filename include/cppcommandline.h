@@ -337,7 +337,7 @@ private:
     {
         KeyValue keyValue;
         std::cmatch m;
-        if(std::regex_match(argument.c_str(), m, std::regex("^(--|-)([a-zA-Z\\d]+)((=(.*))|)")))
+        if(std::regex_match(argument.c_str(), m, std::regex("^(--|-)([a-zA-Z][a-zA-Z\\d]*)((=(.*))|)")))
         {
             keyValue.key = m.size() > 2 ? std::string(m[2]) : "";
             keyValue.value = m.size() > 4 ? std::string(m[5]) : "";
@@ -354,12 +354,12 @@ private:
 
     bool isLongNameArgument(std::string argument) const
     {
-        return std::regex_match(argument, std::regex("^--[a-zA-Z\\d]+$"));
+        return std::regex_match(argument, std::regex("^--[a-zA-Z][a-zA-Z\\d]+$"));
     }
 
     bool isShortNameArgument(std::string argument) const
     {
-        return std::regex_match(argument, std::regex("^-[a-zA-Z\\d]$"));
+        return std::regex_match(argument, std::regex("^-[a-zA-Z]$"));
     }
 
     bool isInteger(std::string argument) const

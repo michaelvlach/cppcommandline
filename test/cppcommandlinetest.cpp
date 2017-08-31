@@ -185,6 +185,16 @@ void CppCommandLineTest::match()
     }
 
     {
+    SCENARIO("Option match negative `int` argument")
+    std::vector<std::string> arguments{"-10"};
+    int value = 0;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(-10, value);
+    }
+
+    {
     SCENARIO("Option match `double` argument")
     std::vector<std::string> arguments{"5.5"};
     double value = 0;
@@ -195,6 +205,16 @@ void CppCommandLineTest::match()
     }
 
     {
+    SCENARIO("Option match negative `double` argument")
+    std::vector<std::string> arguments{"-5.5"};
+    double value = 0;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(double(-5.5), value);
+    }
+
+    {
     SCENARIO("Option match `long long` argument")
     std::vector<std::string> arguments{"999999999999"};
     qint64 value = 0;
@@ -202,6 +222,16 @@ void CppCommandLineTest::match()
     option.bindTo(value);
     QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
     QCOMPARE(qint64(999999999999), value);
+    }
+
+    {
+    SCENARIO("Option match negative `long long` argument")
+    std::vector<std::string> arguments{"-999999999999"};
+    qint64 value = 0;
+    cppcommandline::Option option;
+    option.bindTo(value);
+    QCOMPARE(arguments.cend(), option.match(arguments.cbegin(), arguments.cend()));
+    QCOMPARE(qint64(-999999999999), value);
     }
 }
 
