@@ -9,9 +9,16 @@ Project
 
     QtApplication
     {
-        name: "cppcommandlinetest"
+
+        name: "cppcommandlineexample"
+        cpp.includePaths: [ "include", "example" ]
+        files: [ "example/*" ]
+    }
+
+    QtApplication
+    {
         Depends { name: "Qt.testlib" }
-        cpp.cxxLanguageVersion: "c++11"
+        name: "cppcommandlinetest"
         cpp.includePaths: [ "include", "test" ]
         files: [ "test/*" ]
     }

@@ -30,4 +30,6 @@
 *.exe
 *.out
 *.app
-cppcommandline.qbs.user
+
+#Qt temporary files
+*.user
