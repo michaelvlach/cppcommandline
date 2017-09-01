@@ -286,6 +286,8 @@ void CppCommandLineTest::parse()
     QCOMPARE(value, std::string("value"));
     QCOMPARE(iValue, -10);
     QCOMPARE(dValue, 5.5);
+    QCOMPARE(parser.command(), std::string("./app"));
+    QCOMPARE(parser.applicationName(), std::string("app"));
     }
 
     {

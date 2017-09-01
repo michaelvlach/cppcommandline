@@ -454,11 +454,11 @@ public:
         {
             mCommand = argv[0];
             std::cmatch m;
-            if(std::regex_match(mCommand.c_str(), m, std::regex("([^\\\\\\/]+$)")))
+            if(std::regex_search(mCommand.c_str(), m, std::regex("[^\\\\\\/]+$")))
             {
-                mAppName = m[1];
+                mAppName = m[0];
 
-                if(std::regex_match(mAppName.c_str(), std::regex("\\.exe$")))
+                if(std::regex_search(mAppName.c_str(), std::regex("\\.exe$")))
                     mAppName.erase(mAppName.size() - 4, 4);
             }
         }
