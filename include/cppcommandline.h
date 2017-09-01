@@ -6,6 +6,8 @@
 #include <regex>
 #include <memory>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 
 namespace cppcommandline
 {
@@ -93,6 +95,28 @@ public:
         return val;
     }
 
+    std::string defaultValueAsString() const
+    {
+        std::ostringstream stream;
+
+        switch(d->type)
+        {
+        case Type::Bool: d->defaultValue.b ? stream << "true" : stream << "false"; break;
+        case Type::Double: stream << d->defaultValue.d; break;
+        case Type::Integer: stream << d->defaultValue.i; break;
+        case Type::LongLong: stream << d->defaultValue.l; break;
+        case Type::String: stream << d->defaultStringValue; break;
+        case Type::Undefined: break;
+        }
+
+        return stream.str();
+    }
+
+    bool hasDefaultValue() const
+    {
+        return d->defaulted;
+    }
+
     template<typename T>
     T *boundValue() const
     {
@@ -114,7 +138,6 @@ public:
 
     Option &asShortName(std::string shortName)
     {
-
         if(d->longName.empty())
             throw std::logic_error("Short name cannot be defined for positional arguments.");
         else if(!isShortName(shortName))
@@ -192,7 +215,7 @@ public:
                 std::vector<std::string>::const_iterator it = argument+1;
 
                 if(it == end)
-                    throw(std::logic_error("Missing value for option '" + longName() + "'"));
+                    throw(std::logic_error("Missing value for option '" + (longName().empty() ? "[positional]" : longName()) + "'"));
                 else if(setValue(*it))
                     argument += 2;
             }
@@ -299,7 +322,7 @@ private:
                 *d->valueBinding.s = value;
                 break;
             case Type::Undefined:
-                throw(std::logic_error("Bind value undefined for option '" + longName() + "'"));
+                throw(std::logic_error("Bind value undefined for option '" + (longName().empty() ? "[positional]" : longName()) + "'"));
                 break;
             }
         }
@@ -424,6 +447,16 @@ template<> Option::Type Option::getType<double>() const { return Type::Double; }
 class Parser
 {
 public:
+    bool helpEnabled() const
+    {
+        return mHelp;
+    }
+
+    void disableHelp()
+    {
+        mHelp = false;
+    }
+
     std::string command() const
     {
         return mCommand;
@@ -448,6 +481,8 @@ public:
 
     void parse(int argc, char **argv)
     {
+        try
+        {
         if(argc == 0)
             throw(std::logic_error("Missing mandatory first command line argument"));
         else
@@ -466,7 +501,44 @@ public:
         mArgs = std::vector<std::string>();
 
         for(int i = 1; i < argc; i++)
-            mArgs.emplace_back(std::string(argv[i]));
+            mArgs.emplace_back(argv[i]);
+
+        if(mHelp)
+        {
+            std::vector<std::string> helpNames = {"--help", "-h"};
+
+            if(std::find_first_of(mArgs.cbegin(), mArgs.cend(), helpNames.cbegin(), helpNames.cend()) != mArgs.cend())
+            {
+                std::cout << "Usage: " << mAppName << " [options]" << std::endl;
+                std::cout << "Options:" << std::endl;
+
+                for (const Option& option : mOptions)
+                {
+                    std::ostringstream str;
+
+                    if(option.isPositional())
+                        str << "    [positional]";
+                    else
+                        str << "    -" << option.shortName() << ", --" << option.longName();
+
+                    std::cout << std::left << std::setw(25) << str.str();
+
+                    str = std::ostringstream();
+
+                    if(option.isRequired())
+                        str << "[required]";
+                    else if(option.hasDefaultValue())
+                        str << "[default=" << option.defaultValueAsString() << "]";
+                    else
+                        str << "[optional]";
+
+                    std::cout << std::setw(20) << str.str() << option.description() << std::endl;
+                }
+
+                std::cout << std::endl;
+                return;
+            }
+        }
 
         std::vector<Option*> options;
 
@@ -492,13 +564,23 @@ public:
             }
 
             if(arg == start)
-                throw(std::logic_error("No option set for argument '" + *arg + "'"));
+                throw(std::logic_error("No option matches argument '" + *arg + "'"));
         }
 
         for(Option *option : options)
         {
             if(option->isRequired())
-                throw(std::logic_error("Option '" + option->longName() + "' was set as required but did not match any arguments"));
+                throw(std::logic_error("Option '" + (option->longName().empty() ? "[positional]" : option->longName())  + "' was set as required but did not match any arguments"));
+        }
+        }
+        catch(std::logic_error &e)
+        {
+            std::cout << "Error parsing command line arguments: " << e.what() << std::endl;
+
+            if(mHelp)
+                std::cout << "Use --help or -h to list the command line options." << std::endl;
+
+            throw e;
         }
     }
 
@@ -507,6 +589,7 @@ private:
     std::string mAppName;
     std::vector<std::string> mArgs;
     std::vector<Option> mOptions;
+    bool mHelp = true;
 };
 
 }
