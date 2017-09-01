@@ -7,7 +7,7 @@ Project
         files: [ "include/cppcommandline.h" ]
     }
 
-    QtApplication
+    CppApplication
     {
 
         name: "cppcommandlineexample"
