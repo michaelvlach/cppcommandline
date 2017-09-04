@@ -514,6 +514,7 @@ public:
 
                 for (const Option& option : mOptions)
                 {
+                    {
                     std::ostringstream str;
 
                     if(option.isPositional())
@@ -522,8 +523,10 @@ public:
                         str << "    -" << option.shortName() << ", --" << option.longName();
 
                     std::cout << std::left << std::setw(25) << str.str();
+                    }
 
-                    str = std::ostringstream();
+                    {
+                    std::ostringstream str;
 
                     if(option.isRequired())
                         str << "[required]";
@@ -533,6 +536,7 @@ public:
                         str << "[optional]";
 
                     std::cout << std::setw(20) << str.str() << option.description() << std::endl;
+                    }
                 }
 
                 std::cout << std::endl;
