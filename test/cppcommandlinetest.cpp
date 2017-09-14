@@ -13,7 +13,7 @@ void CppCommandLineTest::OptionDefaultCtor()
     QCOMPARE(option.description(), std::string());
     QCOMPARE(option.isRequired(), false);
     QCOMPARE(option.defaultValue<std::string>(), std::string());
-    QCOMPARE(option.boundValue<std::string>(), nullptr);
+    QVERIFY(option.boundValue<std::string>() == nullptr);
 }
 
 void CppCommandLineTest::OptionLongNameCtor()
@@ -359,6 +359,7 @@ void CppCommandLineTest::parse()
     QCOMPARE(option, std::string("file"));
     QCOMPARE(another, 10);
     QCOMPARE(positional, std::string("somefile"));
+    QVERIFY(!parser.helpDisplayed());
     }
 }
 
@@ -396,6 +397,19 @@ void CppCommandLineTest::parseFailed()
     parser.option("value").asShortName("v").bindTo(value);
     QVERIFY_EXCEPTION_THROWN(parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data())), std::logic_error);
     }
+}
+
+void CppCommandLineTest::help()
+{
+
+    {
+    SCENARIO("Unmatched required option")
+    std::vector<const char*> args{"./app", "-h"};
+    cppcommandline::Parser parser;
+    parser.parse(static_cast<int>(args.size()), const_cast<char**>(args.data()));
+    QVERIFY(parser.helpDisplayed());
+    }
+
 }
 
 QTEST_APPLESS_MAIN(CppCommandLineTest)

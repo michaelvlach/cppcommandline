@@ -22,6 +22,7 @@ private slots:
     void ParserOptionLongName();
     void parse();
     void parseFailed();
+    void help();
 
 private:
     std::unique_ptr<char**, void(*)(char**)> createArguments(std::vector<std::string> arguments);

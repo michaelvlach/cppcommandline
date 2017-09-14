@@ -467,6 +467,11 @@ public:
         return mAppName;
     }
 
+    bool helpDisplayed() const
+    {
+        return mHelpDisplayed;
+    }
+
     Option &option()
     {
         mOptions.emplace_back(Option());
@@ -540,6 +545,7 @@ public:
                 }
 
                 std::cout << std::endl;
+                mHelpDisplayed = true;
                 return;
             }
         }
@@ -594,6 +600,7 @@ private:
     std::vector<std::string> mArgs;
     std::vector<Option> mOptions;
     bool mHelp = true;
+    bool mHelpDisplayed = false;
 };
 
 }
